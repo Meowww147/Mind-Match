@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mind Match</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky1:#bfe6fb; --sky2:#e9f8ee; --grass:#cdeecd;
+  --card:#ffffff; --card-back:#aee0f5;
+  --green:#5cc281; --green-d:#3aa564;
+  --blue:#6fc0ee; --blue-d:#4396c9;
+  --text:#2c4a52; --muted:#7b98a0;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{
+  font-family:'Nunito',sans-serif; color:var(--text); min-height:100%;
+  background:linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 55%,var(--grass) 100%);
+  display:flex; align-items:center; justify-content:center; overflow-x:hidden;
+}
+h1,h2,.title-font{font-family:'Fredoka',sans-serif; font-weight:600;}
+#app{ width:100%; max-width:520px; min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding:28px 18px 44px; gap:16px; text-align:center; }
+.screen{display:none; width:100%; flex-direction:column; align-items:center; gap:14px;}
+.screen.active{display:flex;}
+.brand-image{width:min(210px,60vw);height:210px;object-fit:contain;display:block;}
+.card-image{width:88%;height:88%;object-fit:contain;display:block;pointer-events:none;}
+h1.logo{font-size:2.2rem; margin:0;}
+.tagline{color:var(--muted); font-weight:700;}
+button{ font-family:'Fredoka',sans-serif; font-size:1.05rem; font-weight:600; border:none;
+  border-radius:22px; padding:15px 30px; cursor:pointer; color:#fff;
+  box-shadow:0 4px 0 rgba(0,0,0,0.13); width:100%; max-width:280px;
+  display:flex; align-items:center; justify-content:center; gap:8px; transition:transform .1s; }
+button:focus-visible{outline:3px solid #2c4a52; outline-offset:2px;}
+button:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.13);}
+.btn-green{background:var(--green-d);}
+.btn-blue{background:var(--blue-d);}
+.btn-outline{background:#fff; color:var(--text); box-shadow:0 4px 0 #d7e3e6;}
+.btn-outline.small{max-width:180px; padding:10px 18px; font-size:.9rem;}
+.pill{background:#fff; border-radius:14px; padding:6px 16px; font-weight:800; font-size:.85rem;
+  color:var(--muted); font-family:'Fredoka',sans-serif;}
+.status-bar{width:100%; max-width:460px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center;}
+.topbar{width:100%; max-width:460px; display:flex; gap:10px; justify-content:center;}
+.iconbtn{background:#fff; border-radius:50%; width:38px; height:38px; display:flex;
+  align-items:center; justify-content:center; box-shadow:0 3px 0 rgba(0,0,0,0.08);
+  cursor:pointer; font-size:1.1rem; flex-shrink:0;}
+.grid{display:grid; gap:10px; width:100%; max-width:460px; margin:0 auto;}
+.card{ aspect-ratio:1/1; perspective:700px; cursor:pointer; }
+.card-inner{ position:relative; width:100%; height:100%; border-radius:16px;
+  transition:transform .5s ease; transform-style:preserve-3d;
+  box-shadow:0 3px 0 rgba(0,0,0,0.08); }
+.card.flipped .card-inner{ transform:rotateY(180deg); }
+.card-face{ position:absolute; inset:0; border-radius:16px; display:flex;
+  align-items:center; justify-content:center; font-size:1.7rem; backface-visibility:hidden; }
+.card-back-face{ background:var(--card-back); color:#fff; font-weight:800; font-size:1.4rem; }
+.card-front-face{ background:var(--card); transform:rotateY(180deg); }
+.card.matched .card-front-face{ background:#8ee6ac; color:#1f6b3f; }
+.card.matched .card-inner{ box-shadow:none; animation:matchPop .4s ease; }
+@keyframes matchPop{ 0%{transform:rotateY(180deg) scale(1);} 50%{transform:rotateY(180deg) scale(1.08);} 100%{transform:rotateY(180deg) scale(1);} }
+.card.shake .card-inner{animation:shake .35s;}
+@keyframes shake{0%,100%{transform:rotateY(180deg) translateX(0);}25%{transform:rotateY(180deg) translateX(-6px);}75%{transform:rotateY(180deg) translateX(6px);}}
+.howto ul{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; max-width:340px;}
+.howto li{background:#fff; border-radius:16px; padding:12px 18px; font-weight:700; box-shadow:0 3px 0 rgba(0,0,0,0.06);}
+.completion-image{width:min(200px,55vw);height:200px;object-fit:contain;}
+.preview-msg{font-weight:800; color:var(--blue-d);}
+.cloud{position:fixed; background:#fff; opacity:.7; border-radius:50%; z-index:0;}
+#app{ position:relative; z-index:1; }
+h1.logo{font-size:2.5rem; line-height:1.05;}
+h1.logo .m1{color:var(--blue-d);}
+h1.logo .m2{color:#e0748a;}
+.level-card{ width:100%; max-width:300px; border-radius:22px; padding:16px 20px; display:flex;
+  align-items:center; justify-content:space-between; cursor:pointer; border:none; text-align:left;
+  box-shadow:0 4px 0 rgba(0,0,0,0.08); }
+.level-card .name{font-family:'Fredoka',sans-serif; font-size:1.2rem; font-weight:600;}
+.level-card .sub{font-size:.82rem; opacity:.85; font-weight:700;}
+.level-card .right{display:flex; align-items:center; gap:10px; font-size:1.6rem;}
+.chev{font-size:1.3rem; opacity:.6;}
+.lv-easy{background:#dcf4e2; color:#2f7a4a;}
+.lv-medium{background:#fdefc9; color:#8a6a1a;}
+.lv-hard{background:#fcdde2; color:#a5384a;}
+</style>
+</head>
+<body>
+<div class="cloud" style="width:70px;height:34px;top:6%;left:8%;"></div>
+<div class="cloud" style="width:50px;height:26px;top:10%;right:10%;"></div>
+<div class="cloud" style="width:40px;height:20px;top:4%;right:30%;"></div>
+<div id="app">
+
+  <!-- Home Screen -->
+  <div class="screen active" id="screen-home">
+    <img class="brand-image" src="images/logo.png" alt="Mind Match">
+    <h1 class="logo"><span class="m1">Mind</span><br><span class="m2">Match</span></h1>
+    <div class="tagline">LOOK · REMEMBER · MATCH</div>
+    <button class="btn-green" onclick="goto('level')">Play</button>
+    <button class="btn-outline" onclick="goto('howto')">How to Play</button>
+  </div>
+
+  <!-- Level Select Screen -->
+  <div class="screen" id="screen-level">
+    <div class="topbar"><div class="iconbtn" onclick="goHome()">←</div></div>
+    <h2 class="title-font">Choose Level</h2>
+    <div class="tagline">Pick your challenge</div>
+    <button class="level-card lv-easy" onclick="startGame('easy')"><span><div class="name">Easy</div><div class="sub">4-6 cards · great for beginners</div></span><span class="right"></span></button>
+    <button class="level-card lv-medium" onclick="startGame('medium')"><span><div class="name">Medium</div><div class="sub">8-12 cards · builds memory & focus</div></span><span class="right"></span></button>
+    <button class="level-card lv-hard" onclick="startGame('hard')"><span><div class="name">Hard</div><div class="sub">16-20 cards · a bigger challenge</div></span><span class="right"></span></button>
+  </div>
+
+  <!-- How to Play Screen -->
+  <div class="screen howto" id="screen-howto">
+    <h2 class="title-font">How to Play</h2>
+    <ul>
+      <li>👀 Look at the cards.</li>
+      <li>🔍 Find two cards that match.</li>
+      <li>🐢 Take your time.</li>
+      <li>💚 Keep trying until you find all the pairs.</li>
+    </ul>
+    <button class="btn-outline" onclick="goHome()">← Back</button>
+  </div>
+
+  <!-- Game Screen (preview + play) -->
+  <div class="screen" id="screen-game">
+    <div class="topbar">
+      <div class="iconbtn" onclick="goto('level')">←</div>
+      <button class="btn-outline small" onclick="goHome()">Home</button>
+    </div>
+    <div class="status-bar">
+      <div class="pill" id="label-level">Level: Easy</div>
+      <div class="pill" id="label-category">Category: —</div>
+      <div class="pill" id="label-progress">Pairs Found: 0 / 0</div>
+    </div>
+    <div class="preview-msg" id="preview-msg" style="display:none;">Look at the cards…</div>
+    <div class="grid" id="game-grid"></div>
+  </div>
+
+  <!-- Completion Screen -->
+  <div class="screen" id="screen-complete">
+    <img class="completion-image" src="images/logo.png" alt="Mind Match">
+    <h2 class="title-font">Great Job!</h2>
+    <div class="tagline">You found all the pairs!</div>
+    <button class="btn-green" onclick="playOn()">Play On</button>
+    <button class="btn-blue" onclick="playAgain()">Play Again</button>
+    <button class="btn-outline" onclick="goto('level')">Back to Choose Level</button>
+  </div>
+
+</div>
+
+<script>
+/* ---------- Data ---------- */
+// Add future categories here after placing their transparent PNGs in images/<category>/.
+// Each category needs ten different image paths for the Hard level.
+const CATEGORIES = {
+  Animals: ['dog','cat','rabbit','bear','chicken','panda','koala','lion','cow','giraffe'].map(name => `images/animals/${name}.png`),
+  Food: ['cookies','pancakes','pizza','noodles','avocado-egg-toast','sandwich','cheese','roast-chicken','milk','fried-egg'].map(name => `images/food/${name}.png`),
+  Fruits: ['apple','banana','grapes','strawberry','orange','peach','pineapple','kiwi','watermelon','cherries'].map(name => `images/fruits/${name}.png`),
+  Nature: ['mushrooms','tree','lavender','river','pine-trees','rose','pine-cone','tulip','lily','blue-flower'].map(name => `images/nature/${name}.png`),
+  Objects: ['iron','washing-machine','light-bulb','vacuum-cleaner','umbrella','key','phone','frying-pan','trash-bin','toilet-paper'].map(name => `images/objects/${name}.png`),
+  Shapes: Array.from({length:10}, (_, i) => `images/shapes/shape-${String(i+1).padStart(2,'0')}.png`),
+  Toys: ['building-blocks','toy-blocks','pop-it','beach-ball','kite','toy-dinosaurs','toy-robot','teddy-bear','balloons','puzzle-cube'].map(name => `images/toys/${name}.png`),
+  Vegetables: ['carrot','broccoli','sweet-potato','corn','tomato','peas','garlic','cucumber','onion','chili'].map(name => `images/vegetables/${name}.png`),
+  Vehicles: ['ambulance','helicopter','scooter','excavator','airplane','police-car','bicycle','school-bus','sailboat','crane'].map(name => `images/vehicles/${name}.png`),
+  Weather: ['hot','rain','tornado','rainbow','thunderstorm','snow','sun','lightning','wind','night'].map(name => `images/weather/${name}.png`)
+};
+const LEVELS = {
+  easy:{pairs:3, cols:3, label:'Easy'},
+  medium:{pairs:6, cols:4, label:'Medium'},
+  hard:{pairs:10, cols:5, label:'Hard'}
+};
+
+/* ---------- State ---------- */
+let currentLevel = 'easy';
+let currentCategory = '';
+let deck = [];
+let flipped = [];
+let matchedCount = 0;
+let locked = false; // prevents clicking during transitions
+
+/* ---------- Screen navigation ---------- */
+function goto(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+function goHome(){ goto('home'); }
+
+/* ---------- Core game setup ---------- */
+function selectRandomCategory(){
+  const keys = Object.keys(CATEGORIES);
+  return keys[Math.floor(Math.random()*keys.length)];
+}
+function shuffleCards(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+function createCards(cfg, category){
+  const symbols = shuffleCards([...CATEGORIES[category]]).slice(0, cfg.pairs);
+  return shuffleCards([...symbols, ...symbols]).map((sym,i)=>({id:i, sym, matched:false}));
+}
+
+function startGame(level){
+  currentLevel = level;
+  currentCategory = selectRandomCategory();
+  const cfg = LEVELS[level];
+  deck = createCards(cfg, currentCategory);
+  flipped = []; matchedCount = 0; locked = true;
+
+  document.getElementById('label-level').textContent = 'Level: ' + cfg.label;
+  document.getElementById('label-category').textContent = 'Category: ' + currentCategory;
+  document.getElementById('label-progress').textContent = 'Pairs Found: 0 / ' + cfg.pairs;
+
+  goto('game');
+  buildGrid(cfg);
+  runPreview();
+}
+
+/* Build the card grid once; each card has a back face ("?") and a front face (image) */
+function buildGrid(cfg){
+  const grid = document.getElementById('game-grid');
+  grid.style.gridTemplateColumns = `repeat(${cfg.cols}, 1fr)`;
+  grid.innerHTML = deck.map(c => `
+    <div class="card" data-id="${c.id}" tabindex="0" role="button" aria-label="Memory card"
+      onclick="flipCard(${c.id})"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(${c.id});}">
+      <div class="card-inner">
+        <div class="card-face card-back-face">?</div>
+        <div class="card-face card-front-face"><img class="card-image" src="${c.sym}" alt="Picture"></div>
+      </div>
+    </div>`).join('');
+}
+
+/* Gently flip every card face-up to preview the pictures, then flip them back down */
+function runPreview(){
+  const cardEls = document.querySelectorAll('#game-grid .card');
+  document.getElementById('preview-msg').style.display = 'block';
+
+  setTimeout(()=>{
+    cardEls.forEach((el,i)=> setTimeout(()=> el.classList.add('flipped'), i*40));
+  }, 150);
+
+  setTimeout(()=>{
+    cardEls.forEach((el,i)=> setTimeout(()=> el.classList.remove('flipped'), i*40));
+  }, 2400);
+
+  setTimeout(()=>{
+    document.getElementById('preview-msg').style.display = 'none';
+    locked = false;
+  }, 3100);
+}
+
+/* ---------- Flip / match logic ---------- */
+function flipCard(id){
+  if(locked) return;
+  const c = deck.find(d=>d.id===id);
+  if(!c || c.matched || flipped.includes(id)) return;
+
+  const el = document.querySelector(`.card[data-id="${id}"]`);
+  el.classList.add('flipped');
+  flipped.push(id);
+
+  if(flipped.length === 2){
+    locked = true;
+    setTimeout(()=>checkMatch(), 600);
+  }
+}
+
+function checkMatch(){
+  const [a,b] = flipped;
+  const ca = deck.find(d=>d.id===a), cb = deck.find(d=>d.id===b);
+  if(ca.sym === cb.sym){
+    ca.matched = cb.matched = true;
+    matchedCount++;
+    [a,b].forEach(id=>document.querySelector(`.card[data-id="${id}"]`).classList.add('matched'));
+    flipped = []; locked = false;
+    updateProgress();
+    if(matchedCount === LEVELS[currentLevel].pairs){
+      setTimeout(()=>completeLevel(), 500);
+    }
+  } else {
+    handleMismatch(a,b);
+  }
+}
+
+function handleMismatch(a,b){
+  [a,b].forEach(id=>document.querySelector(`.card[data-id="${id}"]`).classList.add('shake'));
+  setTimeout(()=>{
+    [a,b].forEach(id=>{
+      const el = document.querySelector(`.card[data-id="${id}"]`);
+      el.classList.remove('shake'); el.classList.remove('flipped');
+    });
+    flipped = []; locked = false;
+  }, 800);
+}
+
+function updateProgress(){
+  document.getElementById('label-progress').textContent =
+    'Pairs Found: ' + matchedCount + ' / ' + LEVELS[currentLevel].pairs;
+}
+
+/* ---------- Level completion / navigation ---------- */
+function completeLevel(){
+  goto('complete');
+}
+
+function playOn(){
+  startGame(currentLevel);
+}
+
+function playAgain(){
+  const cfg = LEVELS[currentLevel];
+  deck.forEach(c => c.matched = false);
+  flipped = []; matchedCount = 0; locked = true;
+  document.getElementById('label-progress').textContent = 'Pairs Found: 0 / ' + cfg.pairs;
+  goto('game');
+  buildGrid(cfg);
+  runPreview();
+}
+
+function restartGame(){
+  startGame(currentLevel);
+}
+</script>
+</body>
+</html>
